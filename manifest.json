@@ -1,0 +1,19 @@
+{
+  "name": "高爾夫練習記錄",
+  "short_name": "高爾夫記錄",
+  "description": "記錄每次高爾夫練習的動作評分，AI 教練分析",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFB7C5",
+  "lang": "zh-TW",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    }
+  ]
+}

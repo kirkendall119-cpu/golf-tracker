@@ -5,7 +5,122 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="高爾夫記錄">
+  <meta name="theme-color" content="#FFB7C5">
+  <link rel="manifest" href="manifest.json">
   <title>高爾夫練習記錄</title>
+  <script>
+  /* 頁面載入後把 SVG icon 畫成 PNG，設為 iOS apple-touch-icon */
+  (function(){
+    function drawGolfIcon(size) {
+      var c = document.createElement('canvas');
+      c.width = c.height = size;
+      var ctx = c.getContext('2d');
+      var s = size / 512;
+
+      /* 背景漸層 */
+      var bg = ctx.createRadialGradient(size*.5,size*.44,size*.05, size*.5,size*.5,size*.72);
+      bg.addColorStop(0,'#FFFFFF');
+      bg.addColorStop(1,'#FFE4EF');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0,0,size,size);
+
+      /* 球 shadow */
+      ctx.shadowColor = 'rgba(232,114,154,0.28)';
+      ctx.shadowBlur   = 18*s;
+      ctx.shadowOffsetY= 12*s;
+
+      /* 球體漸層 */
+      var cx=size/2, cy=size/2, r=157*s;
+      var ball = ctx.createRadialGradient(
+        cx-r*.2, cy-r*.25, r*.04,
+        cx, cy, r
+      );
+      ball.addColorStop(0,'#FFFFFF');
+      ball.addColorStop(0.76,'#F5F5F5');
+      ball.addColorStop(1,'#E2E2E2');
+
+      ctx.beginPath();
+      ctx.arc(cx,cy,r,0,Math.PI*2);
+      ctx.fillStyle = ball;
+      ctx.fill();
+      ctx.shadowColor = 'transparent';
+
+      /* Clip 到球內畫 dimples */
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx,cy,r,0,Math.PI*2);
+      ctx.clip();
+
+      var dimples=[
+        [256,112],
+        [212,144],[256,138],[300,144],
+        [170,178],[213,168],[256,165],[299,168],[342,178],
+        [144,215],[187,203],[230,197],[273,195],[316,197],[359,203],
+        [132,255],[173,242],[214,235],[256,233],[298,235],[339,242],[380,255],
+        [144,295],[187,281],[230,274],[273,272],[316,274],[359,281],
+        [170,330],[213,318],[256,315],[299,318],[342,330],
+        [212,360],[256,355],[300,360],
+        [256,386]
+      ];
+      ctx.fillStyle='rgba(198,198,198,0.88)';
+      dimples.forEach(function(d){
+        ctx.beginPath();
+        ctx.arc(d[0]*s, d[1]*s, 11*s, 0, Math.PI*2);
+        ctx.fill();
+      });
+
+      /* 高光 */
+      ctx.save();
+      ctx.translate(207*s, 196*s);
+      ctx.rotate(-0.454);
+      ctx.scale(1, 0.61);
+      ctx.beginPath();
+      ctx.arc(0,0,54*s,0,Math.PI*2);
+      ctx.fillStyle='rgba(255,255,255,0.52)';
+      ctx.fill();
+      ctx.restore();
+
+      ctx.restore();
+
+      /* 櫻花花瓣 */
+      ctx.globalAlpha=0.80;
+      var petals=[
+        [416,76, 38,24,12,'#FFB7C5'],
+        [445,97, -6,22,11,'#FFCAD4'],
+        [406,55, 72,19,10,'#FFB7C5'],
+        [440,65, 22,17, 9,'#FFCAD4']
+      ];
+      petals.forEach(function(p){
+        ctx.save();
+        ctx.translate(p[0]*s, p[1]*s);
+        ctx.rotate(p[2]*Math.PI/180);
+        ctx.scale(1, p[4]/p[3]);
+        ctx.beginPath();
+        ctx.arc(0,0,p[3]*s,0,Math.PI*2);
+        ctx.fillStyle=p[5];
+        ctx.fill();
+        ctx.restore();
+      });
+      ctx.globalAlpha=1;
+
+      return c.toDataURL('image/png');
+    }
+
+    function setAppleTouchIcon(){
+      var png = drawGolfIcon(180);
+      var link = document.querySelector('link[rel="apple-touch-icon"]');
+      if(!link){ link=document.createElement('link'); link.rel='apple-touch-icon'; document.head.appendChild(link); }
+      link.href = png;
+    }
+
+    if(document.readyState==='loading'){
+      document.addEventListener('DOMContentLoaded', setAppleTouchIcon);
+    } else {
+      setAppleTouchIcon();
+    }
+  })();
+  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 

@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="44%" r="72%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#FFE4EF"/>
+    </radialGradient>
+    <radialGradient id="ball" cx="36%" cy="31%" r="70%">
+      <stop offset="0%"   stop-color="#FFFFFF"/>
+      <stop offset="76%"  stop-color="#F5F5F5"/>
+      <stop offset="100%" stop-color="#E2E2E2"/>
+    </radialGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="12" stdDeviation="18"
+                    flood-color="#E8729A" flood-opacity="0.28"/>
+    </filter>
+    <clipPath id="ballClip">
+      <circle cx="256" cy="256" r="157"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+
+  <!-- Ball + shadow -->
+  <circle cx="256" cy="256" r="157" fill="url(#ball)" filter="url(#glow)"/>
+
+  <!-- Dimples (clipped inside ball) -->
+  <g clip-path="url(#ballClip)" fill="#C6C6C6" opacity="0.88">
+    <!-- row 1 -->
+    <circle cx="256" cy="112" r="11"/>
+    <!-- row 2 -->
+    <circle cx="212" cy="144" r="11"/>
+    <circle cx="256" cy="138" r="11"/>
+    <circle cx="300" cy="144" r="11"/>
+    <!-- row 3 -->
+    <circle cx="170" cy="178" r="11"/>
+    <circle cx="213" cy="168" r="11"/>
+    <circle cx="256" cy="165" r="11"/>
+    <circle cx="299" cy="168" r="11"/>
+    <circle cx="342" cy="178" r="11"/>
+    <!-- row 4 -->
+    <circle cx="144" cy="215" r="11"/>
+    <circle cx="187" cy="203" r="11"/>
+    <circle cx="230" cy="197" r="11"/>
+    <circle cx="273" cy="195" r="11"/>
+    <circle cx="316" cy="197" r="11"/>
+    <circle cx="359" cy="203" r="11"/>
+    <!-- row 5 equator -->
+    <circle cx="132" cy="255" r="11"/>
+    <circle cx="173" cy="242" r="11"/>
+    <circle cx="214" cy="235" r="11"/>
+    <circle cx="256" cy="233" r="11"/>
+    <circle cx="298" cy="235" r="11"/>
+    <circle cx="339" cy="242" r="11"/>
+    <circle cx="380" cy="255" r="11"/>
+    <!-- row 6 -->
+    <circle cx="144" cy="295" r="11"/>
+    <circle cx="187" cy="281" r="11"/>
+    <circle cx="230" cy="274" r="11"/>
+    <circle cx="273" cy="272" r="11"/>
+    <circle cx="316" cy="274" r="11"/>
+    <circle cx="359" cy="281" r="11"/>
+    <!-- row 7 -->
+    <circle cx="170" cy="330" r="11"/>
+    <circle cx="213" cy="318" r="11"/>
+    <circle cx="256" cy="315" r="11"/>
+    <circle cx="299" cy="318" r="11"/>
+    <circle cx="342" cy="330" r="11"/>
+    <!-- row 8 -->
+    <circle cx="212" cy="360" r="11"/>
+    <circle cx="256" cy="355" r="11"/>
+    <circle cx="300" cy="360" r="11"/>
+    <!-- row 9 -->
+    <circle cx="256" cy="386" r="11"/>
+  </g>
+
+  <!-- Specular highlight on ball -->
+  <g clip-path="url(#ballClip)">
+    <ellipse cx="207" cy="196" rx="54" ry="33"
+             fill="white" opacity="0.52"
+             transform="rotate(-26 207 196)"/>
+    <ellipse cx="200" cy="188" rx="24" ry="14"
+             fill="white" opacity="0.42"
+             transform="rotate(-26 200 188)"/>
+  </g>
+
+  <!-- Sakura petal cluster – top right -->
+  <g opacity="0.80">
+    <ellipse cx="416" cy="76"  rx="24" ry="12" fill="#FFB7C5" transform="rotate( 38 416 76)"/>
+    <ellipse cx="445" cy="97"  rx="22" ry="11" fill="#FFCAD4" transform="rotate( -6 445 97)"/>
+    <ellipse cx="406" cy="55"  rx="19" ry="10" fill="#FFB7C5" transform="rotate( 72 406 55)"/>
+    <ellipse cx="440" cy="65"  rx="17" ry="9"  fill="#FFCAD4" transform="rotate( 22 440 65)"/>
+    <circle  cx="426" cy="78"  r="5"            fill="#F09DB5"/>
+  </g>
+</svg>
