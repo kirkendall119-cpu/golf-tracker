@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>高爾夫練習記錄</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sakura:      #FFB7C5;
+      --sakura-mid:  #F09DB5;
+      --sakura-dark: #D9618A;
+      --sakura-bg:   #FFF4F7;
+      --text:        #3D1C2E;
+      --text-mid:    #7A4E61;
+      --text-light:  #C4A0B0;
+      --ok:          #4DBB77;
+      --bad:         #E85555;
+      --tab-h:       62px;
+      --header-h:    54px;
+    }
+
+    body {
+      font-family: -apple-system, 'PingFang TC', 'Noto Sans TC', sans-serif;
+      background: #fff;
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── 背景櫻花 ─────────────────────────── */
+    .sakura-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .petal {
+      position: absolute;
+      animation: petalFall linear infinite;
+    }
+
+    @keyframes petalFall {
+      0%   { opacity: .85; transform: translateY(-30px) rotate(0deg)   translateX(0px); }
+      50%  { opacity: .6;  transform: translateY(50vh)  rotate(180deg) translateX(40px); }
+      100% { opacity: .1;  transform: translateY(108vh) rotate(360deg) translateX(-20px); }
+    }
+
+    /* ── 頂部標題 ─────────────────────────── */
+    .header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--header-h);
+      background: rgba(255,255,255,.9);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 1px;
+      z-index: 100;
+      border-bottom: 1px solid var(--sakura-bg);
+    }
+
+    .header h1 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--sakura-dark);
+      letter-spacing: .04em;
+    }
+
+    .session-badge {
+      font-size: 11px;
+      color: var(--text-light);
+      min-height: 14px;
+    }
+
+    /* ── 主內容區 ─────────────────────────── */
+    .main {
+      position: fixed;
+      top: var(--header-h);
+      bottom: var(--tab-h);
+      left: 0; right: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      z-index: 10;
+    }
+
+    /* ── 底部 Tab Bar ──────────────────────── */
+    .tab-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: var(--tab-h);
+      background: rgba(255,255,255,.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid var(--sakura-bg);
+      display: flex;
+      z-index: 100;
+    }
+
+    .tab-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      padding: 0 4px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .tab-btn .tab-icon { font-size: 22px; }
+
+    .tab-btn .tab-label {
+      font-size: 9.5px;
+      color: var(--text-light);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .tab-btn.active .tab-label { color: var(--sakura-dark); font-weight: 700; }
+
+    /* ── 面板 ─────────────────────────────── */
+    .panel { display: none; padding: 14px 14px 20px; min-height: 100%; }
+    .panel.active { display: block; }
+
+    /* ── 共用元件 ─────────────────────────── */
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-light);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .card-block {
+      background: var(--sakura-bg);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .form-row { display: flex; gap: 10px; margin-bottom: 10px; }
+
+    .form-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-group label {
+      font-size: 11px;
+      color: var(--text-mid);
+      font-weight: 700;
+      letter-spacing: .04em;
+    }
+
+    .form-group input {
+      border: 1.5px solid var(--sakura);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 15px;
+      color: var(--text);
+      background: white;
+      width: 100%;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .form-group input:focus { border-color: var(--sakura-dark); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--sakura-mid), var(--sakura-dark));
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 20px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      letter-spacing: .06em;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-light);
+      font-size: 14px;
+    }
+
+    .empty-icon { font-size: 42px; margin-bottom: 12px; }
+
+    /* ── Tab 0: 練習設定 ───────────────────── */
+    .session-card {
+      background: white;
+      border: 1.5px solid #FFE0EB;
+      border-radius: 14px;
+      padding: 14px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .session-card.active {
+      border-color: var(--sakura-dark);
+      background: var(--sakura-bg);
+    }
+
+    .card-title { font-size: 15px; font-weight: 700; color: var(--text); }
+    .card-sub { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+    .card-pct { font-size: 16px; font-weight: 700; color: var(--sakura-dark); margin-right: 8px; }
+
+    .card-del {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      border: none;
+      background: #FFF0F0;
+      color: #E85555;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* ── Tab 1: 練習內容 ───────────────────── */
+    .session-info-bar {
+      background: var(--sakura-bg);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: var(--text-mid);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .session-info-bar strong { color: var(--sakura-dark); }
+    .progress-txt { font-size: 12px; color: var(--text-light); }
+
+    .table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: 12px;
+      border: 1px solid #FFE0EB;
+    }
+
+    .score-table {
+      border-collapse: collapse;
+      width: max-content;
+    }
+
+    /* 表頭 */
+    .score-table thead tr { background: var(--sakura-bg); }
+
+    .score-table th {
+      color: var(--sakura-dark);
+      font-size: 11px;
+      font-weight: 700;
+      text-align: center;
+      border: 1px solid #FFD6E4;
+      padding: 4px 0;
+      white-space: nowrap;
+    }
+
+    .th-ball {
+      position: sticky;
+      left: 0;
+      z-index: 3;
+      background: var(--sakura-bg);
+      width: 34px;
+      min-width: 34px;
+      font-size: 11px;
+    }
+
+    .th-rotate {
+      width: 38px;
+      min-width: 38px;
+      height: 88px;
+      vertical-align: bottom;
+      padding-bottom: 6px;
+    }
+
+    .th-rotate-inner {
+      display: inline-block;
+      transform: rotate(-90deg);
+      transform-origin: center center;
+      white-space: nowrap;
+      width: 80px;
+      margin-left: -21px;
+      font-size: 11px;
+      pointer-events: none;
+    }
+
+    .th-rotate { pointer-events: none; overflow: visible; }
+
+    .th-note {
+      min-width: 110px;
+      font-size: 11px;
+    }
+
+    /* 資料列 */
+    .score-table td {
+      border: 1px solid #FFECF2;
+      text-align: center;
+      padding: 0;
+      height: 38px;
+    }
+
+    .td-ball {
+      position: sticky;
+      left: 0;
+      background: white;
+      z-index: 2;
+      font-size: 11px;
+      color: var(--text-light);
+      font-weight: 600;
+      border-right: 2px solid #FFD6E4;
+      width: 34px;
+      min-width: 34px;
+    }
+
+    .score-table tr:nth-child(even) .td-ball { background: #FFFAFC; }
+    .score-table tr:nth-child(even) td { background: #FFFAFC; }
+
+    /* 評分格 */
+    .sc {
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 17px;
+      font-weight: 700;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: background .12s;
+    }
+
+    .sc[data-v="1"]  { background: rgba(77,187,119,.13); color: var(--ok); }
+    .sc[data-v="-1"] { background: rgba(232,85,85,.13);  color: var(--bad); }
+
+    .note-input {
+      width: 108px;
+      height: 34px;
+      border: none;
+      background: transparent;
+      font-size: 12px;
+      color: var(--text-mid);
+      padding: 0 8px;
+      outline: none;
+      font-family: inherit;
+    }
+
+    /* ── Tab 2: 數據分析 ───────────────────── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .stat-card {
+      background: var(--sakura-bg);
+      border-radius: 14px;
+      padding: 14px 12px;
+      text-align: center;
+    }
+
+    .stat-name { font-size: 12px; color: var(--text-mid); margin-bottom: 6px; }
+
+    .stat-pct {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--sakura-dark);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .stat-bar-wrap {
+      height: 7px;
+      background: rgba(255,183,197,.35);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 5px;
+    }
+
+    .stat-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--sakura), var(--sakura-dark));
+      border-radius: 4px;
+      transition: width .5s ease;
+    }
+
+    .stat-count { font-size: 11px; color: var(--text-light); }
+
+    .api-section {
+      background: var(--sakura-bg);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .api-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-mid);
+      margin-bottom: 10px;
+    }
+
+    .api-input {
+      width: 100%;
+      border: 1.5px solid var(--sakura);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: var(--text);
+      background: white;
+      outline: none;
+      font-family: monospace;
+      -webkit-appearance: none;
+      margin-bottom: 10px;
+    }
+
+    .analysis-result {
+      background: var(--sakura-bg);
+      border-radius: 16px;
+      padding: 16px;
+      font-size: 14px;
+      line-height: 1.8;
+      color: var(--text);
+    }
+
+    .loading-txt {
+      text-align: center;
+      color: var(--text-light);
+      padding: 24px;
+      font-size: 14px;
+    }
+
+    .error-txt {
+      color: var(--bad);
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- 背景櫻花 -->
+<div class="sakura-bg" id="sakuraBg"></div>
+
+<!-- 頂部 -->
+<header class="header">
+  <h1>⛳ 高爾夫練習記錄</h1>
+  <div class="session-badge" id="sessionBadge"></div>
+</header>
+
+<!-- 主內容 -->
+<main class="main" id="mainEl">
+
+  <!-- Tab 0: 練習設定 -->
+  <div class="panel active" id="panel0">
+    <div class="section-title">新增練習</div>
+    <div class="card-block">
+      <div class="form-row">
+        <div class="form-group">
+          <label>日期</label>
+          <input type="date" id="inputDate">
+        </div>
+        <div class="form-group">
+          <label>時間</label>
+          <input type="time" id="inputTime">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>第幾次練習</label>
+          <input type="number" id="inputNum" min="1" value="1">
+        </div>
+      </div>
+      <button class="btn-primary" onclick="createSession()">＋ 開始記錄</button>
+    </div>
+
+    <div class="section-title">所有練習</div>
+    <div id="sessionList"></div>
+  </div>
+
+  <!-- Tab 1: 練習內容 -->
+  <div class="panel" id="panel1">
+    <div id="tableArea"></div>
+  </div>
+
+  <!-- Tab 2: 數據分析 -->
+  <div class="panel" id="panel2">
+    <div id="analysisArea"></div>
+  </div>
+
+</main>
+
+<!-- 底部 Tab Bar -->
+<nav class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab(0)">
+    <span class="tab-icon">📋</span>
+    <span class="tab-label">練習設定</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab(1)">
+    <span class="tab-icon">🏌️</span>
+    <span class="tab-label">練習內容</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab(2)">
+    <span class="tab-icon">📊</span>
+    <span class="tab-label">數據分析</span>
+  </button>
+</nav>
+
+<script>
+/* ================================================================
+   常數
+================================================================ */
+const COLS = ['準備姿勢', '胸椎平轉', '上桿', '臀推', '頭', '送桿', 'K腿', '擊出品質'];
+const KEY  = 'golf_v1';
+
+/* ================================================================
+   狀態
+================================================================ */
+let st = {
+  tab:      0,
+  sessions: [],
+  activeId: null,
+  apiKey:   ''
+};
+
+/* ================================================================
+   Storage
+================================================================ */
+function persist() {
+  localStorage.setItem(KEY, JSON.stringify({ sessions: st.sessions, activeId: st.activeId, apiKey: st.apiKey }));
+}
+
+function hydrate() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY) || '{}');
+    st.sessions = d.sessions || [];
+    st.activeId = d.activeId || null;
+    st.apiKey   = d.apiKey   || '';
+  } catch(e) { /* fresh start */ }
+}
+
+function getActive() {
+  return st.sessions.find(s => s.id === st.activeId) || null;
+}
+
+function initRows() {
+  return Array.from({length: 150}, (_, i) => ({
+    ball:   i + 1,
+    scores: Array(8).fill(null),
+    note:   ''
+  }));
+}
+
+/* ================================================================
+   Tab 切換
+================================================================ */
+function switchTab(t) {
+  st.tab = t;
+  document.querySelectorAll('.panel').forEach((p, i) => p.classList.toggle('active', i === t));
+  document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === t));
+  document.getElementById('mainEl').scrollTop = 0;
+  if (t === 1) renderTable();
+  if (t === 2) renderAnalysis();
+}
+
+/* ================================================================
+   Tab 0 — 練習設定
+================================================================ */
+function setDefaults() {
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const d = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  const t = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  document.getElementById('inputDate').value = d;
+  document.getElementById('inputTime').value = t;
+  const nextN = st.sessions.length ? Math.max(...st.sessions.map(s => s.sessionNumber)) + 1 : 1;
+  document.getElementById('inputNum').value = nextN;
+}
+
+function createSession() {
+  const date = document.getElementById('inputDate').value;
+  const time = document.getElementById('inputTime').value;
+  const num  = parseInt(document.getElementById('inputNum').value) || 1;
+  if (!date) { alert('請輸入日期'); return; }
+
+  const session = {
+    id:            Date.now(),
+    date, time,
+    sessionNumber: num,
+    rows:          initRows()
+  };
+
+  st.sessions.unshift(session);
+  st.activeId = session.id;
+  persist();
+  renderSessionList();
+  updateBadge();
+  switchTab(1);
+}
+
+function selectSession(id) {
+  st.activeId = id;
+  persist();
+  renderSessionList();
+  updateBadge();
+  switchTab(1);
+}
+
+function deleteSession(id) {
+  if (!confirm('確定刪除這次練習記錄？')) return;
+  st.sessions = st.sessions.filter(s => s.id !== id);
+  if (st.activeId === id) st.activeId = st.sessions[0]?.id || null;
+  persist();
+  renderSessionList();
+  updateBadge();
+}
+
+function calcPct(session) {
+  const filled = session.rows.flatMap(r => r.scores).filter(v => v !== null);
+  if (!filled.length) return null;
+  return Math.round(filled.filter(v => v === true).length / filled.length * 100);
+}
+
+function renderSessionList() {
+  const el = document.getElementById('sessionList');
+  if (!st.sessions.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">⛳</div>還沒有練習記錄<br>點上方「開始記錄」新增</div>';
+    return;
+  }
+  el.innerHTML = st.sessions.map(s => {
+    const pct = calcPct(s);
+    const isAct = s.id === st.activeId;
+    return `<div class="session-card ${isAct ? 'active' : ''}" onclick="selectSession(${s.id})">
+      <div>
+        <div class="card-title">第 ${s.sessionNumber} 次練習</div>
+        <div class="card-sub">${s.date}${s.time ? '　' + s.time : ''}</div>
+      </div>
+      <div style="display:flex;align-items:center">
+        <span class="card-pct">${pct !== null ? pct + '%' : '—'}</span>
+        <button class="card-del" onclick="event.stopPropagation();deleteSession(${s.id})">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateBadge() {
+  const s = getActive();
+  document.getElementById('sessionBadge').textContent =
+    s ? `第 ${s.sessionNumber} 次 · ${s.date}` : '';
+}
+
+/* ================================================================
+   Tab 1 — 練習內容
+================================================================ */
+function renderTable() {
+  const area = document.getElementById('tableArea');
+  const session = getActive();
+
+  if (!session) {
+    area.innerHTML = '<div class="empty-state"><div class="empty-icon">🏌️</div>請先在「練習設定」建立練習</div>';
+    return;
+  }
+
+  const filledBalls = session.rows.filter(r => r.scores.some(v => v !== null)).length;
+
+  const thead = `<thead><tr>
+    <th class="th-ball">球</th>
+    ${COLS.map(c => `<th class="th-rotate"><div class="th-rotate-inner">${c}</div></th>`).join('')}
+    <th class="th-note">備註</th>
+  </tr></thead>`;
+
+  const tbody = `<tbody>${session.rows.map((row, ri) => {
+    const cells = row.scores.map((v, ci) => {
+      const dv  = v === true ? '1' : v === false ? '-1' : '0';
+      const ico = v === true ? '✓' : v === false ? '✗' : '';
+      return `<td><div class="sc" data-ri="${ri}" data-ci="${ci}" data-v="${dv}" onclick="toggleScore(${ri},${ci})">${ico}</div></td>`;
+    }).join('');
+    const note = (row.note || '').replace(/"/g, '&quot;');
+    return `<tr>
+      <td class="td-ball">${row.ball}</td>
+      ${cells}
+      <td><input class="note-input" type="text" value="${note}"
+        placeholder="備註" onchange="updateNote(${ri},this.value)"></td>
+    </tr>`;
+  }).join('')}</tbody>`;
+
+  area.innerHTML = `
+    <div class="session-info-bar">
+      <span><strong>第 ${session.sessionNumber} 次</strong>　${session.date} ${session.time || ''}</span>
+      <span class="progress-txt">${filledBalls} / 150 球</span>
+    </div>
+    <div class="table-wrap">
+      <table class="score-table" id="scoreTable">${thead}${tbody}</table>
+    </div>`;
+}
+
+function toggleScore(ri, ci) {
+  const session = getActive();
+  if (!session) return;
+
+  const cur = session.rows[ri].scores[ci];
+  const next = cur === null ? true : cur === true ? false : null;
+  session.rows[ri].scores[ci] = next;
+  persist();
+
+  /* 更新單格 DOM */
+  const cell = document.querySelector(`.sc[data-ri="${ri}"][data-ci="${ci}"]`);
+  if (cell) {
+    cell.setAttribute('data-v', next === true ? '1' : next === false ? '-1' : '0');
+    cell.textContent = next === true ? '✓' : next === false ? '✗' : '';
+  }
+
+  /* 更新進度條 */
+  const filledBalls = session.rows.filter(r => r.scores.some(v => v !== null)).length;
+  const bar = document.querySelector('.progress-txt');
+  if (bar) bar.textContent = `${filledBalls} / 150 球`;
+}
+
+function updateNote(ri, value) {
+  const session = getActive();
+  if (!session) return;
+  session.rows[ri].note = value;
+  persist();
+}
+
+/* ================================================================
+   Tab 2 — 數據分析
+================================================================ */
+function renderAnalysis() {
+  const area = document.getElementById('analysisArea');
+  const session = getActive();
+
+  if (!session) {
+    area.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div>請先選擇一次練習</div>';
+    return;
+  }
+
+  const stats = COLS.map((col, ci) => {
+    const vals   = session.rows.map(r => r.scores[ci]).filter(v => v !== null);
+    const ok     = vals.filter(v => v === true).length;
+    const pct    = vals.length ? Math.round(ok / vals.length * 100) : null;
+    return { col, ok, total: vals.length, pct };
+  });
+
+  const filledBalls = session.rows.filter(r => r.scores.some(v => v !== null)).length;
+
+  const cards = stats.map(s => `
+    <div class="stat-card">
+      <div class="stat-name">${s.col}</div>
+      <div class="stat-pct">${s.pct !== null ? s.pct + '%' : '—'}</div>
+      <div class="stat-bar-wrap"><div class="stat-bar" style="width:${s.pct ?? 0}%"></div></div>
+      <div class="stat-count">${s.total ? s.ok + '/' + s.total + ' 球' : '未記錄'}</div>
+    </div>`).join('');
+
+  area.innerHTML = `
+    <div class="session-info-bar">
+      <span><strong>第 ${session.sessionNumber} 次</strong>　${session.date} ${session.time || ''}</span>
+      <span class="progress-txt">${filledBalls} 球</span>
+    </div>
+    <div class="stat-grid">${cards}</div>
+    <div class="api-section">
+      <div class="api-label">🤖 AI 教練分析</div>
+      <input class="api-input" type="password" id="apiKeyInput"
+        value="${st.apiKey}" placeholder="貼上 Anthropic API Key..."
+        oninput="st.apiKey=this.value;persist()">
+      <button class="btn-primary" onclick="runAnalysis()">分析這次練習</button>
+    </div>
+    <div id="analysisResult"></div>`;
+}
+
+async function runAnalysis() {
+  const session = getActive();
+  if (!session) return;
+
+  const apiKey = document.getElementById('apiKeyInput').value.trim();
+  if (!apiKey) { alert('請先輸入 Anthropic API Key'); return; }
+  st.apiKey = apiKey;
+  persist();
+
+  const resultEl = document.getElementById('analysisResult');
+  resultEl.innerHTML = '<div class="loading-txt">⏳ AI 教練分析中，請稍候…</div>';
+
+  const stats = COLS.map((col, ci) => {
+    const vals = session.rows.map(r => r.scores[ci]).filter(v => v !== null);
+    const ok   = vals.filter(v => v === true).length;
+    const pct  = vals.length ? Math.round(ok / vals.length * 100) : null;
+    return { col, ok, total: vals.length, pct };
+  });
+
+  const validStats = stats.filter(s => s.total > 0);
+  if (!validStats.length) {
+    resultEl.innerHTML = '<div class="analysis-result">尚無足夠資料可分析，請先記錄練習。</div>';
+    return;
+  }
+
+  /* 連錯分析 */
+  const streaks = [];
+  COLS.forEach((col, ci) => {
+    let run = 0, max = 0;
+    session.rows.forEach(r => {
+      if (r.scores[ci] === false) { run++; max = Math.max(max, run); }
+      else run = 0;
+    });
+    if (max >= 3) streaks.push(`${col}（最長連錯 ${max} 球）`);
+  });
+
+  const notes = session.rows
+    .filter(r => r.note)
+    .slice(0, 20)
+    .map(r => `第 ${r.ball} 球：${r.note}`)
+    .join('\n');
+
+  const filledBalls = session.rows.filter(r => r.scores.some(v => v !== null)).length;
+
+  const prompt = `你是一位高爾夫揮桿教練，以下是學員今次練習的自評記錄（✓=動作確實、✗=動作失誤）。
+
+練習資訊：
+- 日期：${session.date} ${session.time || ''}，第 ${session.sessionNumber} 次練習
+- 記錄球數：${filledBalls} 球
+
+各動作好球率（✓佔已記錄球數比率）：
+${validStats.map(s => `・${s.col}：${s.pct}%（${s.ok}/${s.total}）`).join('\n')}
+
+${streaks.length ? '\n連續失誤 3 球以上的動作：\n' + streaks.map(s => '・' + s).join('\n') : ''}
+
+${notes ? '\n備註摘錄：\n' + notes : ''}
+
+請用繁體中文，以教練角度：
+1. 點出最需要優先改善的 2-3 個動作，說明原因
+2. 分析各動作間的可能連鎖影響（例如上桿失誤如何影響擊出品質）
+3. 給出 1-2 個本周可以專項練習的具體建議動作
+
+語氣像對學員直說，簡潔有重點，不要超過 300 字。`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 700,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '（無回應）';
+    resultEl.innerHTML = `<div class="analysis-result">${text.replace(/\n/g, '<br>')}</div>`;
+  } catch(e) {
+    resultEl.innerHTML = `<div class="analysis-result"><span class="error-txt">❌ 分析失敗：${e.message}</span><br><br>請確認 API Key 是否正確，或稍後再試。</div>`;
+  }
+}
+
+/* ================================================================
+   背景櫻花
+================================================================ */
+function createSakura() {
+  const bg = document.getElementById('sakuraBg');
+  const pinks = ['#FFB7C5','#FFCAD4','#FFC0CB','#FFAEC0','#F9A8C9'];
+
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div');
+    p.className = 'petal';
+    const sz  = 7 + Math.random() * 11;
+    const shp = Math.random() > .5 ? '50% 0 50% 0' : '0 50% 0 50%';
+    p.style.cssText = [
+      `width:${sz}px`, `height:${sz}px`,
+      `left:${Math.random() * 100}%`,
+      `background:${pinks[Math.floor(Math.random()*pinks.length)]}`,
+      `border-radius:${shp}`,
+      `animation-duration:${9 + Math.random()*7}s`,
+      `animation-delay:-${Math.random()*10}s`,
+      `opacity:${0.25 + Math.random()*.5}`
+    ].join(';');
+    bg.appendChild(p);
+  }
+}
+
+/* ================================================================
+   初始化
+================================================================ */
+function init() {
+  hydrate();
+  setDefaults();
+  renderSessionList();
+  updateBadge();
+  createSakura();
+}
+
+init();
+</script>
+</body>
+</html>
