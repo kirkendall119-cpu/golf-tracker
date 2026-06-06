@@ -321,6 +321,33 @@
 
     .empty-icon { font-size: 42px; margin-bottom: 12px; }
 
+    /* ── 備份按鈕 ────────────────────────── */
+    .backup-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .btn-backup {
+      flex: 1;
+      border: 1.5px solid var(--sakura-mid);
+      border-radius: 12px;
+      padding: 12px 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--sakura-dark);
+      background: white;
+      cursor: pointer;
+      text-align: center;
+      -webkit-tap-highlight-color: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-backup:active { background: var(--sakura-bg); }
+
     /* ── Tab 0: 練習設定 ───────────────────── */
     .session-card {
       background: white;
@@ -604,6 +631,16 @@
         </div>
       </div>
       <button class="btn-primary" onclick="createSession()">＋ 開始記錄</button>
+    </div>
+
+    <div class="section-title">資料備份</div>
+    <div class="backup-row">
+      <button class="btn-backup" onclick="exportData()">⬇ 匯出備份</button>
+      <label class="btn-backup">
+        ⬆ 匯入還原
+        <input type="file" accept=".json" style="display:none"
+               onchange="importData(this.files[0]);this.value=''">
+      </label>
     </div>
 
     <div class="section-title">所有練習</div>
@@ -1022,6 +1059,46 @@ function createSakura() {
     ].join(';');
     bg.appendChild(p);
   }
+}
+
+/* ================================================================
+   備份 / 還原
+================================================================ */
+function exportData() {
+  const raw = localStorage.getItem(KEY) || '{}';
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const dateStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  const filename = `golf_backup_${dateStr}.json`;
+
+  const blob = new Blob([raw], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importData(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data.sessions)) throw new Error('檔案格式不正確');
+      localStorage.setItem(KEY, JSON.stringify(data));
+      hydrate();
+      renderSessionList();
+      updateBadge();
+      alert(`✅ 已匯入 ${data.sessions.length} 筆練習記錄`);
+    } catch(err) {
+      alert('❌ 匯入失敗：' + err.message);
+    }
+  };
+  reader.readAsText(file);
 }
 
 /* ================================================================
