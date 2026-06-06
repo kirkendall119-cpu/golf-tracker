@@ -391,12 +391,12 @@
 
     .score-table th {
       color: var(--sakura-dark);
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
       text-align: center;
       border: 1px solid #FFD6E4;
-      padding: 4px 0;
-      white-space: nowrap;
+      padding: 5px 2px;
+      vertical-align: middle;
     }
 
     .th-ball {
@@ -406,33 +406,20 @@
       background: var(--sakura-bg);
       width: 34px;
       min-width: 34px;
-      font-size: 11px;
+      font-size: 12px;
     }
 
-    .th-rotate {
-      width: 38px;
-      min-width: 38px;
-      height: 88px;
-      vertical-align: bottom;
-      padding-bottom: 6px;
+    .th-score {
+      width: 40px;
+      min-width: 40px;
+      white-space: normal;
+      word-break: break-all;
+      line-height: 1.25;
     }
-
-    .th-rotate-inner {
-      display: inline-block;
-      transform: rotate(-90deg);
-      transform-origin: center center;
-      white-space: nowrap;
-      width: 80px;
-      margin-left: -21px;
-      font-size: 11px;
-      pointer-events: none;
-    }
-
-    .th-rotate { pointer-events: none; overflow: visible; }
 
     .th-note {
       min-width: 110px;
-      font-size: 11px;
+      font-size: 12px;
     }
 
     /* 資料列 */
@@ -474,8 +461,9 @@
       transition: background .12s;
     }
 
-    .sc[data-v="1"]  { background: rgba(77,187,119,.13); color: var(--ok); }
-    .sc[data-v="-1"] { background: rgba(232,85,85,.13);  color: var(--bad); }
+    .sc[data-v="1"]  { background: rgba(77,187,119,.13);  color: var(--ok); }
+    .sc[data-v="-1"] { background: rgba(232,85,85,.13);   color: var(--bad); }
+    .sc[data-v="2"]  { background: rgba(245,166,35,.13);  color: #E09020; }
 
     .note-input {
       width: 108px;
@@ -809,14 +797,14 @@ function renderTable() {
 
   const thead = `<thead><tr>
     <th class="th-ball">球</th>
-    ${COLS.map(c => `<th class="th-rotate"><div class="th-rotate-inner">${c}</div></th>`).join('')}
+    ${COLS.map(c => `<th class="th-score">${c}</th>`).join('')}
     <th class="th-note">備註</th>
   </tr></thead>`;
 
   const tbody = `<tbody>${session.rows.map((row, ri) => {
     const cells = row.scores.map((v, ci) => {
-      const dv  = v === true ? '1' : v === false ? '-1' : '0';
-      const ico = v === true ? '✓' : v === false ? '✗' : '';
+      const dv  = v === true ? '1' : v === false ? '-1' : v === 'tri' ? '2' : '0';
+      const ico = v === true ? '✓' : v === false ? '✗' : v === 'tri' ? '△' : '';
       return `<td><div class="sc" data-ri="${ri}" data-ci="${ci}" data-v="${dv}" onclick="toggleScore(${ri},${ci})">${ico}</div></td>`;
     }).join('');
     const note = (row.note || '').replace(/"/g, '&quot;');
@@ -843,15 +831,21 @@ function toggleScore(ri, ci) {
   if (!session) return;
 
   const cur = session.rows[ri].scores[ci];
-  const next = cur === null ? true : cur === true ? false : null;
+  const isQuality = (ci === 7);
+  let next;
+  if (isQuality) {
+    next = cur === null ? true : cur === true ? false : cur === false ? 'tri' : null;
+  } else {
+    next = cur === null ? true : cur === true ? false : null;
+  }
   session.rows[ri].scores[ci] = next;
   persist();
 
   /* 更新單格 DOM */
   const cell = document.querySelector(`.sc[data-ri="${ri}"][data-ci="${ci}"]`);
   if (cell) {
-    cell.setAttribute('data-v', next === true ? '1' : next === false ? '-1' : '0');
-    cell.textContent = next === true ? '✓' : next === false ? '✗' : '';
+    cell.setAttribute('data-v', next === true ? '1' : next === false ? '-1' : next === 'tri' ? '2' : '0');
+    cell.textContent = next === true ? '✓' : next === false ? '✗' : next === 'tri' ? '△' : '';
   }
 
   /* 更新進度條 */
